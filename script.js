@@ -31,16 +31,11 @@ const SCAN_COOLDOWN_MS = 3000;
 
 // ---------------------------------------------------------------------------
 // TEST MODE
-// When test mode is ON, no real request is sent to n8n.
-// Instead, the page simulates a random response (success / duplicate / error)
-// so you can verify the scanner and UI work before n8n is ready.
+// When test mode is ON, the page scans real QR codes but does NOT send
+// anything to n8n. Instead it just displays the scanned token so you can
+// verify the camera and QR reading work correctly before n8n is ready.
 // Toggle it on the page using the checkbox — no code changes needed.
 // ---------------------------------------------------------------------------
-const TEST_RESPONSES = [
-  { status: "success",   student_name: "Alice Demo",  message: "Checked in successfully" },
-  { status: "duplicate", student_name: "Bob Sample",  message: "Already checked in" },
-  { status: "error",                                   message: "Unknown QR token" },
-];
 
 function isTestMode() {
   return $("testModeToggle").checked;
@@ -54,19 +49,6 @@ function onTestModeToggle() {
     indicator.classList.add("hidden");
   }
 }
-
-// Returns a simulated n8n response after a short fake delay
-function simulateWebhookResponse() {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Cycle through success → duplicate → error for easy testing
-      const index = simulateWebhookResponse._callCount % TEST_RESPONSES.length;
-      simulateWebhookResponse._callCount++;
-      resolve(TEST_RESPONSES[index]);
-    }, 600); // 600ms fake network delay
-  });
-}
-simulateWebhookResponse._callCount = 0;
 
 
 // ---------------------------------------------------------------------------
@@ -300,8 +282,17 @@ async function sendCheckin(payload, token, eventName, participationType, timesta
     let data;
 
     if (isTestMode()) {
-      // TEST MODE: skip the real request and return a fake response
-      data = await simulateWebhookResponse();
+      // TEST MODE: show what was scanned without sending anything to n8n
+      showStatus(`🔍 Scanned token: ${payload.qr_token}`, "info");
+      showLastScan({
+        studentName: "(test mode — not sent to n8n)",
+        token: payload.qr_token,
+        eventName: payload.event_name,
+        participationType: payload.participation_type,
+        timestamp: payload.timestamp,
+      });
+      resumeAfterCooldown();
+      return;
     } else {
       // LIVE MODE: send the real POST request to n8n
       const response = await fetch(WEBHOOK_URL, {
