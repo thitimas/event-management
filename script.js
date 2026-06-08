@@ -29,6 +29,45 @@ const WEBHOOK_URL = "https://cstep-n8n.york.cuny.edu/webhook/cstep-attendance-ch
 // 3000 = 3 seconds. This prevents the same QR from being sent twice.
 const SCAN_COOLDOWN_MS = 3000;
 
+// ---------------------------------------------------------------------------
+// TEST MODE
+// When test mode is ON, no real request is sent to n8n.
+// Instead, the page simulates a random response (success / duplicate / error)
+// so you can verify the scanner and UI work before n8n is ready.
+// Toggle it on the page using the checkbox — no code changes needed.
+// ---------------------------------------------------------------------------
+const TEST_RESPONSES = [
+  { status: "success",   student_name: "Alice Demo",  message: "Checked in successfully" },
+  { status: "duplicate", student_name: "Bob Sample",  message: "Already checked in" },
+  { status: "error",                                   message: "Unknown QR token" },
+];
+
+function isTestMode() {
+  return $("testModeToggle").checked;
+}
+
+function onTestModeToggle() {
+  const indicator = $("testModeIndicator");
+  if (isTestMode()) {
+    indicator.classList.remove("hidden");
+  } else {
+    indicator.classList.add("hidden");
+  }
+}
+
+// Returns a simulated n8n response after a short fake delay
+function simulateWebhookResponse() {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      // Cycle through success → duplicate → error for easy testing
+      const index = simulateWebhookResponse._callCount % TEST_RESPONSES.length;
+      simulateWebhookResponse._callCount++;
+      resolve(TEST_RESPONSES[index]);
+    }, 600); // 600ms fake network delay
+  });
+}
+simulateWebhookResponse._callCount = 0;
+
 
 // ---------------------------------------------------------------------------
 // STATE — internal variables, do not edit
@@ -252,24 +291,30 @@ function onScanFailure(error) {
 
 
 // ---------------------------------------------------------------------------
-// SEND TO N8N WEBHOOK
-// Uses the browser's built-in fetch() to POST the payload to n8n.
+// SEND TO N8N WEBHOOK (or simulate if test mode is on)
 // ---------------------------------------------------------------------------
 async function sendCheckin(payload, token, eventName, participationType, timestamp) {
   try {
-    const response = await fetch(WEBHOOK_URL, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify(payload),
-    });
-
-    // Try to parse the JSON response from n8n
     let data;
-    try {
-      data = await response.json();
-    } catch (_) {
-      // n8n returned something that isn't valid JSON
-      data = { status: "error", message: "Unexpected response from server." };
+
+    if (isTestMode()) {
+      // TEST MODE: skip the real request and return a fake response
+      data = await simulateWebhookResponse();
+    } else {
+      // LIVE MODE: send the real POST request to n8n
+      const response = await fetch(WEBHOOK_URL, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(payload),
+      });
+
+      // Try to parse the JSON response from n8n
+      try {
+        data = await response.json();
+      } catch (_) {
+        // n8n returned something that isn't valid JSON
+        data = { status: "error", message: "Unexpected response from server." };
+      }
     }
 
     handleWebhookResponse(data, token, eventName, participationType, timestamp);

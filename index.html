@@ -38,6 +38,15 @@
         </select>
       </div>
 
+      <!-- Test Mode Toggle -->
+      <div class="form-group test-mode-row">
+        <label class="toggle-label">
+          <input type="checkbox" id="testModeToggle" onchange="onTestModeToggle()" />
+          <span class="toggle-text">Test mode <span class="toggle-hint">(simulate responses, no n8n needed)</span></span>
+        </label>
+        <div id="testModeIndicator" class="test-mode-indicator hidden">🧪 Test mode active — no real data is being sent</div>
+      </div>
+
       <!-- Scanner Controls -->
       <div class="scanner-controls">
         <button id="startBtn" class="btn btn-primary" onclick="startScanner()">Start Scanner</button>
