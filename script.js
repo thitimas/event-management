@@ -246,10 +246,12 @@ function onScanSuccess(decodedText) {
   // Ignore scans during the cooldown window (prevents duplicate submissions)
   if (isCoolingDown) return;
 
-  // Immediately pause the scanner so the same code isn't sent twice
+  // Immediately pause the scanner so the same code isn't sent twice.
+  // pause(false) keeps the video feed live but stops QR detection —
+  // this avoids the library's "Scanner paused" freeze overlay.
   isCoolingDown = true;
-  if (html5QrCode && html5QrCode.isScanning) {
-    html5QrCode.pause(true);
+  if (html5QrCode) {
+    try { html5QrCode.pause(false); } catch (_) {}
   }
 
   // Extract the token from the scanned text (handles both URL and plain formats)
@@ -374,8 +376,10 @@ function handleWebhookResponse(data, token, eventName, participationType, timest
 function resumeAfterCooldown() {
   cooldownTimer = setTimeout(() => {
     isCoolingDown = false;
-    if (html5QrCode && html5QrCode.isScanning) {
-      html5QrCode.resume();
+    // Call resume() directly — isScanning returns false when paused,
+    // so we can't use it as a guard here.
+    if (html5QrCode) {
+      try { html5QrCode.resume(); } catch (_) {}
     }
   }, SCAN_COOLDOWN_MS);
 }
