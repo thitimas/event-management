@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CSTEP Attendance Scanner</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>CSTEP Attendance Scanner</h1>
+      <p class="subtitle">Scan student QR codes to record attendance</p>
+    </header>
+
+    <main>
+      <!-- Event Selection -->
+      <div class="form-group">
+        <label for="eventSelect">Event</label>
+        <select id="eventSelect">
+          <option value="" data-uuid="">— Select an event —</option>
+          <option value="Research Presentation Day" data-uuid="evt-uuid-001">Research Presentation Day</option>
+          <option value="Workshop" data-uuid="evt-uuid-002">Workshop</option>
+          <option value="Mentoring Session" data-uuid="evt-uuid-003">Mentoring Session</option>
+          <option value="Other Event" data-uuid="evt-uuid-004">Other Event</option>
+        </select>
+      </div>
+
+      <!-- Participation Type -->
+      <div class="form-group">
+        <label for="participationSelect">Participation Type</label>
+        <select id="participationSelect">
+          <option value="attended">Attended</option>
+          <option value="presented">Presented</option>
+          <option value="peer_mentor">Peer Mentor</option>
+          <option value="volunteer">Volunteer</option>
+          <option value="organizer">Organizer</option>
+        </select>
+      </div>
+
+      <!-- Scanner Controls -->
+      <div class="scanner-controls">
+        <button id="startBtn" class="btn btn-primary" onclick="startScanner()">Start Scanner</button>
+        <button id="stopBtn" class="btn btn-secondary" onclick="stopScanner()" disabled>Stop Scanner</button>
+      </div>
+
+      <!-- Camera / QR Area -->
+      <div id="scannerWrapper" class="scanner-wrapper hidden">
+        <div id="qr-reader"></div>
+        <p class="scanner-hint">Point the camera at a student QR code</p>
+      </div>
+
+      <!-- Status / Result Area -->
+      <div id="statusArea" class="status-area hidden">
+        <div id="statusMessage" class="status-message"></div>
+      </div>
+
+      <!-- Last Scan Info -->
+      <div id="lastScan" class="last-scan hidden">
+        <h3>Last Scan</h3>
+        <div id="lastScanDetails"></div>
+      </div>
+    </main>
+
+    <footer>
+      <p>CSTEP / STEP Attendance System &mdash; Scanner Page</p>
+    </footer>
+  </div>
+
+  <!-- html5-qrcode library -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

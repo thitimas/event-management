@@ -1,0 +1,296 @@
+/* ============================================
+   CSTEP Attendance Scanner — Stylesheet
+   ============================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --color-primary:   #1a4e8a;
+  --color-primary-hover: #153d6e;
+  --color-secondary: #6c757d;
+  --color-secondary-hover: #545b62;
+  --color-success:   #155724;
+  --color-success-bg: #d4edda;
+  --color-success-border: #c3e6cb;
+  --color-warning:   #856404;
+  --color-warning-bg: #fff3cd;
+  --color-warning-border: #ffeeba;
+  --color-error:     #721c24;
+  --color-error-bg:  #f8d7da;
+  --color-error-border: #f5c6cb;
+  --color-bg:        #f4f6f9;
+  --color-card:      #ffffff;
+  --color-text:      #212529;
+  --color-muted:     #6c757d;
+  --radius:          8px;
+  --shadow:          0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  max-width: 520px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ---- Header ---- */
+header {
+  text-align: center;
+  padding: 24px 16px 16px;
+}
+
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.2;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  color: var(--color-muted);
+  margin-top: 6px;
+}
+
+/* ---- Main card ---- */
+main {
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+}
+
+/* ---- Form groups ---- */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 1rem;
+  border: 1px solid #ced4da;
+  border-radius: var(--radius);
+  background-color: #fff;
+  color: var(--color-text);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236c757d' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.form-group select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(26, 78, 138, 0.15);
+}
+
+/* ---- Buttons ---- */
+.scanner-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  flex: 1;
+  padding: 12px 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background-color 0.15s, opacity 0.15s;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: #fff;
+}
+
+.btn-primary:not(:disabled):hover {
+  background-color: var(--color-primary-hover);
+}
+
+.btn-secondary {
+  background-color: var(--color-secondary);
+  color: #fff;
+}
+
+.btn-secondary:not(:disabled):hover {
+  background-color: var(--color-secondary-hover);
+}
+
+/* ---- Scanner area ---- */
+.scanner-wrapper {
+  border: 2px dashed #ced4da;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #000;
+  position: relative;
+}
+
+.scanner-hint {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #fff;
+  background: rgba(0,0,0,0.55);
+  padding: 6px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+/* Override html5-qrcode defaults */
+#qr-reader {
+  width: 100% !important;
+  border: none !important;
+}
+
+#qr-reader video {
+  width: 100% !important;
+  border-radius: 0 !important;
+}
+
+#qr-reader__scan_region {
+  background: transparent !important;
+}
+
+#qr-reader__dashboard {
+  display: none !important;
+}
+
+/* ---- Status messages ---- */
+.status-area {
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.status-message {
+  padding: 14px 16px;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.4;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+}
+
+.status-message.success {
+  background-color: var(--color-success-bg);
+  border-color: var(--color-success-border);
+  color: var(--color-success);
+}
+
+.status-message.warning {
+  background-color: var(--color-warning-bg);
+  border-color: var(--color-warning-border);
+  color: var(--color-warning);
+}
+
+.status-message.error {
+  background-color: var(--color-error-bg);
+  border-color: var(--color-error-border);
+  color: var(--color-error);
+}
+
+.status-message.info {
+  background-color: #cce5ff;
+  border-color: #b8daff;
+  color: #004085;
+}
+
+/* ---- Last scan card ---- */
+.last-scan {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+
+.last-scan h3 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+  margin-bottom: 8px;
+}
+
+#lastScanDetails {
+  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#lastScanDetails .detail-row {
+  display: flex;
+  gap: 6px;
+}
+
+#lastScanDetails .detail-label {
+  font-weight: 600;
+  color: var(--color-muted);
+  min-width: 130px;
+}
+
+/* ---- Footer ---- */
+footer {
+  text-align: center;
+  padding: 16px;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+/* ---- Utility ---- */
+.hidden {
+  display: none !important;
+}
+
+/* ---- Cooldown overlay ---- */
+.cooldown-badge {
+  display: inline-block;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
