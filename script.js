@@ -54,9 +54,14 @@ function onTestModeToggle() {
 // ---------------------------------------------------------------------------
 // STATE — internal variables, do not edit
 // ---------------------------------------------------------------------------
-let html5QrCode  = null;  // holds the scanner instance
+let html5QrCode   = null;  // holds the scanner instance
 let isCoolingDown = false; // true while waiting between scans
 let cooldownTimer = null;  // reference to the cooldown timeout
+
+// Set by confirmSetup() — used in every scan payload
+let sessionEventName    = "";
+let sessionActivityType = "";
+let sessionActivityLabel = "";
 
 
 // ---------------------------------------------------------------------------
@@ -134,17 +139,44 @@ function extractToken(scannedText) {
 
 
 // ---------------------------------------------------------------------------
-// DROPDOWN READERS
-// Read the currently selected event name and participation type.
+// SETUP — confirm event details before scanning begins
 // ---------------------------------------------------------------------------
-function getSelectedEvent() {
-  const select = $("eventSelect");
-  const option = select.options[select.selectedIndex];
-  return option.value; // returns the event name string
+function confirmSetup() {
+  const eventName = $("eventNameInput").value.trim();
+  const activitySelect = $("activitySelect");
+  const activityType  = activitySelect.value;
+  const activityLabel = activitySelect.options[activitySelect.selectedIndex].text;
+
+  if (!eventName) {
+    alert("Please enter an event name.");
+    return;
+  }
+  if (!activityType) {
+    alert("Please select an activity type.");
+    return;
+  }
+
+  // Store for use in every scan
+  sessionEventName     = eventName;
+  sessionActivityType  = activityType;
+  sessionActivityLabel = activityLabel;
+
+  // Update session summary display
+  $("summaryEvent").textContent    = eventName;
+  $("summaryActivity").textContent = activityLabel;
+
+  // Switch panels
+  $("setupPanel").classList.add("hidden");
+  $("scannerPanel").classList.remove("hidden");
 }
 
-function getParticipationType() {
-  return $("participationSelect").value;
+// Allow admin to go back and change details (stops scanner first)
+function resetSetup() {
+  stopScanner();
+  $("scannerPanel").classList.add("hidden");
+  $("setupPanel").classList.remove("hidden");
+  hideStatus();
+  $("lastScan").classList.add("hidden");
 }
 
 
@@ -153,14 +185,6 @@ function getParticipationType() {
 // Initialises the html5-qrcode library and opens the camera.
 // ---------------------------------------------------------------------------
 function startScanner() {
-  const eventName = getSelectedEvent();
-
-  // Don't start if no event is selected
-  if (!eventName) {
-    showStatus("⚠ Please select an event before scanning.", "warning");
-    return;
-  }
-
   hideStatus();
   $("scannerWrapper").classList.remove("hidden");
   $("startBtn").disabled = true;
@@ -238,8 +262,8 @@ function onScanSuccess(decodedText) {
 
   // Extract the token from the scanned text (handles both URL and plain formats)
   const token             = extractToken(decodedText);
-  const eventName         = getSelectedEvent();
-  const participationType = getParticipationType();
+  const eventName         = sessionEventName;
+  const participationType = sessionActivityType;
   const timestamp         = new Date().toISOString();
 
   showStatus("Sending check-in data…", "info");

@@ -14,61 +14,85 @@
     </header>
 
     <main>
-      <!-- Event Selection -->
-      <div class="form-group">
-        <label for="eventSelect">Event</label>
-        <select id="eventSelect">
-          <option value="" data-uuid="">— Select an event —</option>
-          <option value="Research Presentation Day" data-uuid="evt-uuid-001">Research Presentation Day</option>
-          <option value="Workshop" data-uuid="evt-uuid-002">Workshop</option>
-          <option value="Mentoring Session" data-uuid="evt-uuid-003">Mentoring Session</option>
-          <option value="Other Event" data-uuid="evt-uuid-004">Other Event</option>
-        </select>
+
+      <!-- ── SETUP PANEL (shown first) ── -->
+      <div id="setupPanel">
+        <p class="setup-intro">Enter the event details once before scanning.</p>
+
+        <!-- Event Name -->
+        <div class="form-group">
+          <label for="eventNameInput">Event Name</label>
+          <input type="text" id="eventNameInput" placeholder="e.g. Research Presentation Day 2026" />
+        </div>
+
+        <!-- Activity Type -->
+        <div class="form-group">
+          <label for="activitySelect">Activity / Service Type</label>
+          <select id="activitySelect">
+            <option value="">— Select activity type —</option>
+            <option value="supplemental_financial_assistance">Supplemental Financial Assistance (book award, conference travel, stipend, etc.)</option>
+            <option value="summer_program">Summer Program</option>
+            <option value="tutoring_supplemental_instruction">Tutoring / Supplemental Instruction</option>
+            <option value="supplemental_academic_advisement">Supplemental Academic Advisement</option>
+            <option value="academic_enrichment_workshop">Academic Enrichment / Workshop</option>
+            <option value="career_planning_workshop">Career Planning / Workshop</option>
+            <option value="graduate_admissions_license_exam_prep">Graduate Admissions / License Exam Prep</option>
+          </select>
+        </div>
+
+        <!-- Test Mode -->
+        <div class="form-group test-mode-row">
+          <label class="toggle-label">
+            <input type="checkbox" id="testModeToggle" onchange="onTestModeToggle()" />
+            <span class="toggle-text">Test mode <span class="toggle-hint">(scan real QR — no data sent to n8n)</span></span>
+          </label>
+          <div id="testModeIndicator" class="test-mode-indicator hidden">🧪 Test mode active — no real data is being sent</div>
+        </div>
+
+        <button class="btn btn-primary" onclick="confirmSetup()">Confirm &amp; Start Scanning</button>
       </div>
 
-      <!-- Participation Type -->
-      <div class="form-group">
-        <label for="participationSelect">Participation Type</label>
-        <select id="participationSelect">
-          <option value="attended">Attended</option>
-          <option value="presented">Presented</option>
-          <option value="peer_mentor">Peer Mentor</option>
-          <option value="volunteer">Volunteer</option>
-          <option value="organizer">Organizer</option>
-        </select>
+      <!-- ── SCANNER PANEL (shown after setup) ── -->
+      <div id="scannerPanel" class="hidden">
+
+        <!-- Active session summary -->
+        <div class="session-summary">
+          <div class="session-row">
+            <span class="session-label">Event:</span>
+            <span id="summaryEvent"></span>
+          </div>
+          <div class="session-row">
+            <span class="session-label">Activity:</span>
+            <span id="summaryActivity"></span>
+          </div>
+          <button class="btn-link" onclick="resetSetup()">✏ Change</button>
+        </div>
+
+        <!-- Scanner Controls -->
+        <div class="scanner-controls">
+          <button id="startBtn" class="btn btn-primary" onclick="startScanner()">Start Scanner</button>
+          <button id="stopBtn" class="btn btn-secondary" onclick="stopScanner()" disabled>Stop Scanner</button>
+        </div>
+
+        <!-- Camera / QR Area -->
+        <div id="scannerWrapper" class="scanner-wrapper hidden">
+          <div id="qr-reader"></div>
+          <p class="scanner-hint">Point the camera at a student QR code</p>
+        </div>
+
+        <!-- Status / Result Area -->
+        <div id="statusArea" class="status-area hidden">
+          <div id="statusMessage" class="status-message"></div>
+        </div>
+
+        <!-- Last Scan Info -->
+        <div id="lastScan" class="last-scan hidden">
+          <h3>Last Scan</h3>
+          <div id="lastScanDetails"></div>
+        </div>
+
       </div>
 
-      <!-- Test Mode Toggle -->
-      <div class="form-group test-mode-row">
-        <label class="toggle-label">
-          <input type="checkbox" id="testModeToggle" onchange="onTestModeToggle()" />
-          <span class="toggle-text">Test mode <span class="toggle-hint">(simulate responses, no n8n needed)</span></span>
-        </label>
-        <div id="testModeIndicator" class="test-mode-indicator hidden">🧪 Test mode active — no real data is being sent</div>
-      </div>
-
-      <!-- Scanner Controls -->
-      <div class="scanner-controls">
-        <button id="startBtn" class="btn btn-primary" onclick="startScanner()">Start Scanner</button>
-        <button id="stopBtn" class="btn btn-secondary" onclick="stopScanner()" disabled>Stop Scanner</button>
-      </div>
-
-      <!-- Camera / QR Area -->
-      <div id="scannerWrapper" class="scanner-wrapper hidden">
-        <div id="qr-reader"></div>
-        <p class="scanner-hint">Point the camera at a student QR code</p>
-      </div>
-
-      <!-- Status / Result Area -->
-      <div id="statusArea" class="status-area hidden">
-        <div id="statusMessage" class="status-message"></div>
-      </div>
-
-      <!-- Last Scan Info -->
-      <div id="lastScan" class="last-scan hidden">
-        <h3>Last Scan</h3>
-        <div id="lastScanDetails"></div>
-      </div>
     </main>
 
     <footer>
