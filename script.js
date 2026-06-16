@@ -142,17 +142,24 @@ function extractToken(scannedText) {
 // SETUP — confirm event details before scanning begins
 // ---------------------------------------------------------------------------
 function confirmSetup() {
-  const eventName = $("eventNameInput").value.trim();
+  const eventName      = $("eventNameInput").value.trim();
   const activitySelect = $("activitySelect");
-  const activityType  = activitySelect.value;
-  const activityLabel = activitySelect.options[activitySelect.selectedIndex].text;
+  const activityType   = activitySelect.value;
+  const activityLabel  = activitySelect.options[activitySelect.selectedIndex].text;
+
+  // Clear any previous error
+  $("setupError").classList.add("hidden");
+  $("setupError").textContent = "";
 
   if (!eventName) {
-    alert("Please enter an event name.");
+    $("setupError").textContent = "⚠ Please enter an event name.";
+    $("setupError").classList.remove("hidden");
+    $("eventNameInput").focus();
     return;
   }
   if (!activityType) {
-    alert("Please select an activity type.");
+    $("setupError").textContent = "⚠ Please select an activity type.";
+    $("setupError").classList.remove("hidden");
     return;
   }
 
