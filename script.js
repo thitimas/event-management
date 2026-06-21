@@ -404,17 +404,22 @@ async function startScanner() {
     rememberLastUsedCamera: true,
   };
 
-  html5QrCode
-    .start(
-      { facingMode: "environment" }, // use the rear camera on mobile
-      config,
-      onScanSuccess,  // called when a QR code is detected
-      onScanFailure   // called every frame when no QR is found (normal)
-    )
-    .catch((err) => {
-      showStatus("Camera error: " + err, "error");
+  // Phones: prefer the rear ("environment") camera. Desktops and Macs have no
+  // rear camera, so that constraint fails — fall back to any available camera.
+  try {
+    await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure);
+  } catch (envErr) {
+    try {
+      const cameras = await Html5Qrcode.getCameras();
+      if (!cameras || cameras.length === 0) throw envErr;
+      const rear = cameras.find((cam) => /back|rear|environment/i.test(cam.label || ""));
+      const cameraId = (rear || cameras[0]).id;
+      await html5QrCode.start(cameraId, config, onScanSuccess, onScanFailure);
+    } catch (err) {
+      showStatus("Camera error: " + (err && err.message ? err.message : err), "error");
       resetScannerUI();
-    });
+    }
+  }
 }
 
 
