@@ -110,6 +110,11 @@ main {
   transition: border-color 0.15s;
 }
 
+.form-group select:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}
+
 .form-group select:focus {
   outline: none;
   border-color: var(--color-primary);
@@ -153,6 +158,28 @@ main {
 }
 
 .btn-secondary:not(:disabled):hover {
+  background-color: var(--color-secondary-hover);
+}
+
+.btn-small {
+  flex: 0 0 auto;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius);
+  background-color: var(--color-secondary);
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.15s, opacity 0.15s;
+}
+
+.btn-small:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-small:not(:disabled):hover {
   background-color: var(--color-secondary-hover);
 }
 
@@ -287,6 +314,32 @@ footer {
   font-size: 0.9rem;
   color: var(--color-muted);
   margin-bottom: 4px;
+}
+
+.select-refresh-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.select-refresh-row select {
+  min-width: 0;
+}
+
+.form-help {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  line-height: 1.35;
+}
+
+.form-help.error {
+  color: var(--color-error);
+  font-weight: 600;
+}
+
+.form-help.success {
+  color: var(--color-success);
+  font-weight: 600;
 }
 
 .form-group input[type="text"] {
