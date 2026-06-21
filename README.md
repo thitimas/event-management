@@ -1,137 +1,102 @@
 # CSTEP Attendance Scanner
 
-A static, mobile-friendly QR code scanner for recording student attendance at CSTEP/STEP events. Hosted on GitHub Pages — no server required.
+A static, mobile-friendly QR scanner for recording student attendance at CSTEP/STEP events. It is designed for GitHub Pages and sends attendance scans into an inbound n8n webhook.
 
 ---
 
 ## How It Works
 
-A peer mentor or staff member opens the page, selects the event and participation type, then taps **Start Scanner**. The camera opens, and when a student QR code is scanned, the student's token is sent to an n8n webhook that records the check-in.
+1. A GitHub Actions workflow uses a private Eventbrite API token to fetch today's live Eventbrite events for your organizer, along with each event's agenda (the sessions inside it, e.g. "Research Presentations", "AI Workshop").
+2. The workflow writes a public, safe `events-today.json` file with only event names/start times and their agenda session titles.
+3. A coordinator opens the scanner page, selects one of today's Eventbrite events, selects the agenda session students are checking into, and starts scanning.
+4. Each QR scan sends only the student QR token plus the selected event and agenda session to n8n.
+
+The Eventbrite API token is never included in browser JavaScript or sent to n8n.
 
 ---
 
-## Setup
+## Required GitHub Configuration
 
-### 1. Update the n8n Webhook URL
+Add these in your GitHub repository settings.
 
-Open `script.js` and replace the placeholder on line 12:
+### Secret
+
+| Name | Purpose |
+|------|---------|
+| `EVENTBRITE_API_TOKEN` | Private Eventbrite API token used only by GitHub Actions |
+
+### Variable
+
+| Name | Purpose |
+|------|---------|
+| `EVENTBRITE_ORGANIZER_ID` | Eventbrite organizer ID whose events should appear in the scanner |
+
+The workflow defaults to the `America/New_York` timezone.
+
+---
+
+## Event List Refresh
+
+The workflow in `.github/workflows/update-eventbrite-events.yml` runs:
+
+- Hourly, at minute 7
+- Manually from the GitHub Actions tab
+
+It writes `events-today.json` at the repository root. If the Eventbrite API request fails, the workflow fails and does not overwrite the previous generated file.
+
+The scanner blocks setup when:
+
+- `events-today.json` cannot be loaded
+- The file date is not today's date in `America/New_York`
+- The file has zero events
+
+---
+
+## n8n Webhook
+
+Update the attendance webhook URL in `script.js`:
 
 ```js
-const WEBHOOK_URL = "https://YOUR-N8N-DOMAIN/webhook/cstep-attendance-checkin";
+const WEBHOOK_URL = "https://cstep-n8n.york.cuny.edu/webhook/cstep-attendance-checkin";
 ```
 
-Change it to your actual n8n webhook URL, e.g.:
+Each live scan sends this JSON body:
 
-```js
-const WEBHOOK_URL = "https://n8n.yourdomain.com/webhook/cstep-attendance-checkin";
+```json
+{
+  "qr_token": "abc123",
+  "event_id": "123456789",
+  "event_name": "STEP",
+  "agenda_title": "Research Presentations"
+}
 ```
 
----
-
-### 2. Update Event Names and UUIDs
-
-Events are defined in two places that must stay in sync.
-
-**`index.html`** — the dropdown options:
-
-```html
-<option value="Research Presentation Day" data-uuid="evt-uuid-001">Research Presentation Day</option>
-<option value="Workshop"                  data-uuid="evt-uuid-002">Workshop</option>
-```
-
-Replace `evt-uuid-001`, `evt-uuid-002`, etc. with the real UUIDs from your database or n8n workflow. Add or remove `<option>` lines as needed.
-
-**`script.js`** — the `EVENT_OPTIONS` reference object (used for documentation; the UUID is read from the HTML `data-uuid` attribute at runtime):
-
-```js
-const EVENT_OPTIONS = {
-  "Research Presentation Day": "evt-uuid-001",
-  "Workshop":                  "evt-uuid-002",
-  ...
-};
-```
-
-Keep both files consistent.
-
----
-
-### 3. Host on GitHub Pages
-
-1. Create a new GitHub repository (e.g., `cstep-scanner`).
-2. Push all four files to the `main` branch:
-   ```
-   index.html
-   style.css
-   script.js
-   README.md
-   ```
-3. Go to **Settings → Pages** in your GitHub repo.
-4. Under **Source**, select `Deploy from a branch`, choose `main`, folder `/ (root)`, and click **Save**.
-5. GitHub will publish the site at:
-   ```
-   https://<your-github-username>.github.io/cstep-scanner/
-   ```
-6. Share this URL with peer mentors.
-
-> **HTTPS is required** for camera access. GitHub Pages serves over HTTPS by default, so this works out of the box.
-
----
-
-## How to Use (for Peer Mentors & Staff)
-
-1. **Open the scanner page** on your phone or tablet.
-2. **Select the event** from the dropdown (e.g., "Workshop").
-3. **Select your role** in the Participation Type dropdown (e.g., "Peer Mentor" if you are the one scanning; select the student's role if you know it).
-4. Tap **Start Scanner** — your camera will open.
-5. Hold the camera over a student's QR code. The app will automatically detect and scan it.
-6. Check the status message:
-   - 🟢 **Green** = Check-in successful
-   - 🟡 **Yellow** = Student already checked in (duplicate)
-   - 🔴 **Red** = Error (unknown token or network issue)
-7. After each scan the camera pauses for 3 seconds, then resumes automatically.
-8. Tap **Stop Scanner** when you are done.
+n8n should use `qr_token` to match the student and the `event_name` / `agenda_title` fields for reporting (e.g. marking the student present for that session).
 
 ---
 
 ## QR Code Format
 
-The scanner handles two formats:
+The scanner handles two QR formats:
 
 | Format | Example |
 |--------|---------|
 | Full URL | `https://cstep.york.cuny.edu/checkin?token=abc123` |
 | Token only | `abc123` |
 
-If a URL is scanned, the `token` query parameter is extracted automatically.
+If a URL is scanned, the `token` query parameter is extracted automatically. If no URL token is found, the full scanned text is used as `qr_token`.
 
 ---
 
-## Webhook Payload
+## Hosting on GitHub Pages
 
-Each successful scan sends a POST request with this JSON body:
+1. Push the repository to GitHub.
+2. Configure the Eventbrite secret and organizer ID above.
+3. Run **Update Eventbrite Events** manually once from the Actions tab.
+4. Go to **Settings -> Pages**.
+5. Set the source to deploy from the `main` branch and root folder.
 
-```json
-{
-  "qr_token": "abc123",
-  "event_uuid": "evt-uuid-002",
-  "event_name": "Workshop",
-  "participation_type": "attended",
-  "checkin_method": "qr_scan",
-  "checked_in_by": "scanner_page",
-  "timestamp": "2025-04-01T14:32:00.000Z"
-}
-```
-
----
-
-## Troubleshooting
-
-| Problem | Fix |
-|---------|-----|
-| Camera doesn't open | Make sure the page is loaded over HTTPS and camera permission is granted in the browser |
-| "Network error" message | Check that the webhook URL in `script.js` is correct and your n8n instance is running |
-| QR not detected | Ensure adequate lighting; hold the phone steady about 6–10 inches from the QR code |
-| Always shows error | Verify the student's QR token exists in your n8n/database workflow |
+HTTPS is required for camera access. GitHub Pages serves over HTTPS by default.
 
 ---
 
@@ -139,7 +104,9 @@ Each successful scan sends a POST request with this JSON body:
 
 | File | Purpose |
 |------|---------|
-| `index.html` | Page structure and dropdowns |
+| `index.html` | Scanner setup and page structure |
 | `style.css` | Mobile-friendly styles |
-| `script.js` | Scanner logic, webhook call, response handling |
-| `README.md` | This file |
+| `script.js` | Event dropdown, QR scanner, and webhook payload logic |
+| `events-today.json` | Public event list generated by GitHub Actions |
+| `scripts/fetch-eventbrite-events.js` | GitHub Actions Eventbrite fetcher |
+| `.github/workflows/update-eventbrite-events.yml` | Hourly/manual event-list workflow |
