@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CSTEP / STEP Attendance Scanner</title>
-  <link rel="stylesheet" href="style.css?v=8" />
+  <link rel="stylesheet" href="style.css?v=9" />
 </head>
 <body>
   <div class="container">
@@ -39,6 +39,21 @@
           <p id="sessionStatus" class="form-help"></p>
         </div>
 
+        <!-- Activity Type (CSTEP / STEP service category) -->
+        <div class="form-group">
+          <label for="activityTypeSelect">Activity / Service Type</label>
+          <select id="activityTypeSelect">
+            <option value="">— Select activity type —</option>
+            <option value="supplemental_financial_assistance">Supplemental Financial Assistance (book award, conference travel, stipend, etc.)</option>
+            <option value="summer_program">Summer Program</option>
+            <option value="tutoring_supplemental_instruction">Tutoring / Supplemental Instruction</option>
+            <option value="supplemental_academic_advisement">Supplemental Academic Advisement</option>
+            <option value="academic_enrichment_workshop">Academic Enrichment / Workshop</option>
+            <option value="career_planning_workshop">Career Planning / Workshop</option>
+            <option value="graduate_admissions_license_exam_prep">Graduate Admissions / License Exam Prep</option>
+          </select>
+        </div>
+
         <!-- Test Mode -->
         <div class="form-group test-mode-row">
           <label class="toggle-label">
@@ -64,6 +79,10 @@
           <div class="session-row">
             <span class="session-label">Session:</span>
             <span id="summarySession"></span>
+          </div>
+          <div class="session-row">
+            <span class="session-label">Type:</span>
+            <span id="summaryActivityType"></span>
           </div>
         </div>
 
@@ -104,6 +123,6 @@
 
   <!-- html5-qrcode library -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <script src="script.js?v=8"></script>
+  <script src="script.js?v=9"></script>
 </body>
 </html>

@@ -30,9 +30,10 @@ let cooldownTimer = null;  // reference to the cooldown timeout
 let todayEvents   = [];    // events loaded from events-today.json
 
 // Set by confirmSetup() — used in every scan payload
-let sessionEventId     = "";
-let sessionEventName   = "";
-let sessionAgendaTitle = "";
+let sessionEventId      = "";
+let sessionEventName    = "";
+let sessionAgendaTitle  = "";
+let sessionActivityType = ""; // DB value, e.g. "summer_program"
 
 
 // ---------------------------------------------------------------------------
@@ -354,14 +355,25 @@ function confirmSetup() {
     return;
   }
 
+  const activityTypeSelect = $("activityTypeSelect");
+  const activityTypeLabel  = activityTypeSelect.options[activityTypeSelect.selectedIndex].text;
+
+  if (!activityTypeSelect.value) {
+    showSetupError("Please select an activity type.");
+    activityTypeSelect.focus();
+    return;
+  }
+
   // Store for use in every scan
-  sessionEventId     = selectedEvent.id;
-  sessionEventName   = selectedEvent.name;
-  sessionAgendaTitle = session.title;
+  sessionEventId      = selectedEvent.id;
+  sessionEventName    = selectedEvent.name;
+  sessionAgendaTitle  = session.title;
+  sessionActivityType = activityTypeSelect.value;
 
   // Update session summary display
-  $("summaryEvent").textContent   = selectedEvent.name;
-  $("summarySession").textContent = session.title;
+  $("summaryEvent").textContent        = selectedEvent.name;
+  $("summarySession").textContent      = session.title;
+  $("summaryActivityType").textContent = activityTypeLabel;
 
   // Switch panels
   $("setupPanel").classList.add("hidden");
@@ -468,11 +480,12 @@ function onScanSuccess(decodedText) {
 
   // Keep this payload intentionally small for the n8n workflow.
   const payload = {
-    qr_token:     token,
-    event_id:     sessionEventId,
-    event_name:   sessionEventName,
-    event_date:   getLocalDateString(),
-    agenda_title: sessionAgendaTitle,
+    qr_token:      token,
+    event_id:      sessionEventId,
+    event_name:    sessionEventName,
+    event_date:    getLocalDateString(),
+    agenda_title:  sessionAgendaTitle,
+    activity_type: sessionActivityType,
   };
 
   sendCheckin(payload, timestamp);
