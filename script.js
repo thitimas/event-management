@@ -30,10 +30,9 @@ let cooldownTimer = null;  // reference to the cooldown timeout
 let todayEvents   = [];    // events loaded from n8n webhook
 
 // Set by confirmSetup() — used in every scan payload
-let sessionEventId      = "";
-let sessionEventName    = "";
-let sessionAgendaTitle  = "";
-let sessionActivityType = ""; // DB value, e.g. "summer_program"
+let sessionEventId     = "";
+let sessionEventName   = "";
+let sessionAgendaTitle = "";
 
 
 // ---------------------------------------------------------------------------
@@ -47,25 +46,6 @@ const $ = (id) => document.getElementById(id);
 // STARTUP
 // ---------------------------------------------------------------------------
 loadEventsToday();
-
-
-// ---------------------------------------------------------------------------
-// TEST MODE
-// When test mode is ON, the page scans real QR codes but does NOT send
-// anything to n8n. Instead it displays what would have been sent.
-// ---------------------------------------------------------------------------
-function isTestMode() {
-  return $("testModeToggle").checked;
-}
-
-function onTestModeToggle() {
-  const indicator = $("testModeIndicator");
-  if (isTestMode()) {
-    indicator.classList.remove("hidden");
-  } else {
-    indicator.classList.add("hidden");
-  }
-}
 
 
 // ---------------------------------------------------------------------------
@@ -355,25 +335,14 @@ function confirmSetup() {
     return;
   }
 
-  const activityTypeSelect = $("activityTypeSelect");
-  const activityTypeLabel  = activityTypeSelect.options[activityTypeSelect.selectedIndex].text;
-
-  if (!activityTypeSelect.value) {
-    showSetupError("Please select an activity type.");
-    activityTypeSelect.focus();
-    return;
-  }
-
   // Store for use in every scan
-  sessionEventId      = selectedEvent.id;
-  sessionEventName    = selectedEvent.name;
-  sessionAgendaTitle  = session.title;
-  sessionActivityType = activityTypeSelect.value;
+  sessionEventId     = selectedEvent.id;
+  sessionEventName   = selectedEvent.name;
+  sessionAgendaTitle = session.title;
 
   // Update session summary display
-  $("summaryEvent").textContent        = selectedEvent.name;
-  $("summarySession").textContent      = session.title;
-  $("summaryActivityType").textContent = activityTypeLabel;
+  $("summaryEvent").textContent   = selectedEvent.name;
+  $("summarySession").textContent = session.title;
 
   // Switch panels
   $("setupPanel").classList.add("hidden");
@@ -476,16 +445,14 @@ function onScanSuccess(decodedText) {
   const token     = extractToken(decodedText);
   const timestamp = new Date().toISOString();
 
-  showStatus(isTestMode() ? "Preparing test scan..." : "Sending check-in data...", "info");
+  showStatus("Sending check-in data...", "info");
 
-  // Keep this payload intentionally small for the n8n workflow.
   const payload = {
-    qr_token:      token,
-    event_id:      sessionEventId,
-    event_name:    sessionEventName,
-    event_date:    getLocalDateString(),
-    agenda_title:  sessionAgendaTitle,
-    activity_type: sessionActivityType,
+    qr_token:     token,
+    event_id:     sessionEventId,
+    event_name:   sessionEventName,
+    event_date:   getLocalDateString(),
+    agenda_title: sessionAgendaTitle,
   };
 
   sendCheckin(payload, timestamp);
@@ -506,17 +473,6 @@ function onScanFailure(error) {
 async function sendCheckin(payload, timestamp) {
   try {
     let data;
-
-    if (isTestMode()) {
-      showStatus(`Scanned token: ${payload.qr_token}`, "info");
-      showLastScan({
-        studentName: "(test mode — not sent to n8n)",
-        sessionTitle: payload.agenda_title,
-        timestamp,
-      });
-      resumeAfterCooldown();
-      return;
-    }
 
     const response = await fetch(WEBHOOK_URL, {
       method:  "POST",
