@@ -237,10 +237,11 @@ async function loadEventsToday() {
             title: String(session.title),
             start_time: session.start_time ? String(session.start_time) : "",
           })),
-      }));
+      }))
+      .filter((event) => event.agenda.length > 0);
 
     if (todayEvents.length === 0) {
-      throw new Error("No Eventbrite events are available for today.");
+      throw new Error("No events with agenda sessions are available for today.");
     }
 
     setEventSelectOptions(todayEvents);
