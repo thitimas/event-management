@@ -281,15 +281,12 @@ async function loadEventsToday() {
 // LAST SCAN DETAILS
 // Displays a summary of the most recent scan at the bottom of the page.
 // ---------------------------------------------------------------------------
-function showLastScan({ studentName, token, eventName, eventDate, sessionTitle, timestamp }) {
+function showLastScan({ studentName, sessionTitle, timestamp }) {
   const details = $("lastScanDetails");
   details.textContent = "";
 
   addDetailRow(details, "Student:", studentName || "—");
-  addDetailRow(details, "Token:", token);
-  addDetailRow(details, "Event:", eventName);
   addDetailRow(details, "Session:", sessionTitle);
-  addDetailRow(details, "Event Date:", eventDate)
   addDetailRow(details, "Time:", new Date(timestamp).toLocaleTimeString());
 
   $("lastScan").classList.remove("hidden");
@@ -501,9 +498,6 @@ async function sendCheckin(payload, timestamp) {
       showStatus(`Scanned token: ${payload.qr_token}`, "info");
       showLastScan({
         studentName: "(test mode — not sent to n8n)",
-        token: payload.qr_token,
-        eventName: payload.event_name,
-        eventDate: payload.event_date,
         sessionTitle: payload.agenda_title,
         timestamp,
       });
@@ -553,9 +547,6 @@ function handleWebhookResponse(data, payload, timestamp) {
     );
     showLastScan({
       studentName,
-      token: payload.qr_token,
-      eventName: payload.event_name,
-      eventDate: payload.event_date,
       sessionTitle: payload.agenda_title,
       timestamp,
     });
@@ -567,9 +558,6 @@ function handleWebhookResponse(data, payload, timestamp) {
     );
     showLastScan({
       studentName,
-      token: payload.qr_token,
-      eventName: payload.event_name,
-      eventDate: payload.event_date,
       sessionTitle: payload.agenda_title,
       timestamp,
     });

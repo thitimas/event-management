@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CSTEP / STEP Attendance Scanner</title>
-  <link rel="stylesheet" href="style.css?v=7" />
+  <link rel="stylesheet" href="style.css?v=8" />
 </head>
 <body>
   <div class="container">
@@ -65,8 +65,10 @@
             <span class="session-label">Session:</span>
             <span id="summarySession"></span>
           </div>
-          <button class="btn-link" onclick="resetSetup()">Change</button>
         </div>
+
+        <!-- Switch to a different event / session -->
+        <button class="btn btn-change" onclick="resetSetup()">Change Event / Session</button>
 
         <!-- Scanner Controls -->
         <div class="scanner-controls">
@@ -102,6 +104,6 @@
 
   <!-- html5-qrcode library -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <script src="script.js?v=6"></script>
+  <script src="script.js?v=8"></script>
 </body>
 </html>

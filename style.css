@@ -271,38 +271,47 @@ main {
   color: #004085;
 }
 
+/* The scanner result is the most important thing on screen — make it big. */
+#statusArea .status-message {
+  padding: 20px 18px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+}
+
 /* ---- Last scan card ---- */
 .last-scan {
   background: #f8f9fa;
   border: 1px solid #e9ecef;
   border-radius: var(--radius);
-  padding: 14px 16px;
+  padding: 18px 20px;
 }
 
 .last-scan h3 {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-muted);
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 #lastScanDetails {
-  font-size: 0.9rem;
+  font-size: 1.2rem;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
 }
 
 #lastScanDetails .detail-row {
   display: flex;
-  gap: 6px;
+  gap: 10px;
 }
 
 #lastScanDetails .detail-label {
   font-weight: 600;
   color: var(--color-muted);
-  min-width: 130px;
+  min-width: 90px;
 }
 
 /* ---- Footer ---- */
@@ -390,19 +399,18 @@ footer {
   min-width: 60px;
 }
 
-.btn-link {
-  background: none;
-  border: none;
+/* Full-width button to switch event/session — clearly visible, not a tiny link. */
+.btn-change {
+  width: 100%;
+  min-height: 48px;
+  background-color: #fff;
   color: var(--color-primary);
-  font-size: 0.8rem;
-  cursor: pointer;
-  padding: 4px 0 0;
-  text-align: left;
-  text-decoration: underline;
+  border: 1px solid var(--color-primary);
 }
 
-.btn-link:hover {
-  color: var(--color-primary-hover);
+.btn-change:not(:disabled):active {
+  background-color: var(--color-primary);
+  color: #fff;
 }
 
 /* ---- Test mode ---- */
