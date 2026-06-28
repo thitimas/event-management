@@ -61,7 +61,7 @@ Populated by the fetch workflow when the page loads. One row per event + agenda 
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `event_id` | BIGINT | Eventbrite event ID — part of primary key |
+| `event_id` | TEXT | Eventbrite event ID — part of primary key |
 | `activity_name` | TEXT | Agenda session title — part of primary key |
 | `activity_type` | TEXT | Service type from Eventbrite session description |
 | `activity_date` | DATE | Event date |
@@ -72,31 +72,18 @@ One row per student check-in.
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `id` | SERIAL | Internal surrogate key |
-| `event_id` | BIGINT | FK → activities |
+| `event_id` | TEXT | FK → activities |
 | `activity_name` | TEXT | FK → activities |
 | `student_id` | TEXT | Eventbrite attendee barcode |
-| `checked_in_at` | TIMESTAMPTZ | Defaults to now() |
 
 ---
 
 ## Eventbrite Setup
 
 - **Activity type** is read from the Eventbrite agenda session's description field. Sessions without a description are excluded from the scanner dropdown.
-- Students must be checked into the main event in Eventbrite before the scanner will record their sub-event attendance.
+- Students must be checked into the main event in Eventbrite before the scanner will record their sub-event attendance this is insurance for checking them into main.
 
 ---
-
-## Hosting
-
-The scanner is a static site hosted on GitHub Pages. HTTPS is required for camera access — GitHub Pages provides this by default.
-
-1. Push to the `main` branch.
-2. Go to **Settings → Pages** and set source to the `main` branch, root folder.
-3. Update `WEBHOOK_URL` and `EVENTS_TODAY_URL` in `script.js` to point at your n8n instance.
-
----
-
 ## Files
 
 | File | Purpose |
