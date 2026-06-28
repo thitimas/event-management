@@ -1,145 +1,93 @@
-# CSTEP Attendance Scanner
+# CSTEP / STEP Attendance Scanner
 
-A static, mobile-friendly QR code scanner for recording student attendance at CSTEP/STEP events. Hosted on GitHub Pages — no server required.
+A mobile-friendly QR scanner for recording student attendance at CSTEP/STEP sub-events. Coordinators select today's Eventbrite event and agenda session before scanning. Each scan is verified against Eventbrite and recorded in a PostgreSQL database via n8n.
 
 ---
 
 ## How It Works
 
-A peer mentor or staff member opens the page, selects the event and participation type, then taps **Start Scanner**. The camera opens, and when a student QR code is scanned, the student's token is sent to an n8n webhook that records the check-in.
+1. On page load the scanner calls an n8n GET webhook, which fetches today's Eventbrite events and their agenda sessions in real time.
+2. Only events with agenda sessions that have a service type set in their Eventbrite description are shown.
+3. A coordinator selects an event and session, then starts scanning student QR codes.
+4. Each scan is sent to an n8n POST webhook which:
+   - Looks up the student barcode in Eventbrite to verify they checked into the main event
+   - Inserts an attendance record into the `activity_attendance` table
+   - Returns the student's name to display on screen
+
+The Eventbrite API token never touches the browser — it lives in n8n credentials.
 
 ---
 
-## Setup
+## n8n Webhooks
 
-### 1. Update the n8n Webhook URL
-
-Open `script.js` and replace the placeholder on line 12:
+Update both URLs in `script.js` if the n8n instance or workflow IDs change:
 
 ```js
-const WEBHOOK_URL = "https://YOUR-N8N-DOMAIN/webhook/cstep-attendance-checkin";
+// Receives each QR scan and records attendance
+const WEBHOOK_URL = "https://cstep-n8n.york.cuny.edu/webhook/...";
+
+// Called on page load to fetch today's events and agenda sessions
+const EVENTS_TODAY_URL = "https://cstep-n8n.york.cuny.edu/webhook/...";
 ```
 
-Change it to your actual n8n webhook URL, e.g.:
-
-```js
-const WEBHOOK_URL = "https://n8n.yourdomain.com/webhook/cstep-attendance-checkin";
-```
-
----
-
-### 2. Update Event Names and UUIDs
-
-Events are defined in two places that must stay in sync.
-
-**`index.html`** — the dropdown options:
-
-```html
-<option value="Research Presentation Day" data-uuid="evt-uuid-001">Research Presentation Day</option>
-<option value="Workshop"                  data-uuid="evt-uuid-002">Workshop</option>
-```
-
-Replace `evt-uuid-001`, `evt-uuid-002`, etc. with the real UUIDs from your database or n8n workflow. Add or remove `<option>` lines as needed.
-
-**`script.js`** — the `EVENT_OPTIONS` reference object (used for documentation; the UUID is read from the HTML `data-uuid` attribute at runtime):
-
-```js
-const EVENT_OPTIONS = {
-  "Research Presentation Day": "evt-uuid-001",
-  "Workshop":                  "evt-uuid-002",
-  ...
-};
-```
-
-Keep both files consistent.
-
----
-
-### 3. Host on GitHub Pages
-
-1. Create a new GitHub repository (e.g., `cstep-scanner`).
-2. Push all four files to the `main` branch:
-   ```
-   index.html
-   style.css
-   script.js
-   README.md
-   ```
-3. Go to **Settings → Pages** in your GitHub repo.
-4. Under **Source**, select `Deploy from a branch`, choose `main`, folder `/ (root)`, and click **Save**.
-5. GitHub will publish the site at:
-   ```
-   https://<your-github-username>.github.io/cstep-scanner/
-   ```
-6. Share this URL with peer mentors.
-
-> **HTTPS is required** for camera access. GitHub Pages serves over HTTPS by default, so this works out of the box.
-
----
-
-## How to Use (for Peer Mentors & Staff)
-
-1. **Open the scanner page** on your phone or tablet.
-2. **Select the event** from the dropdown (e.g., "Workshop").
-3. **Select your role** in the Participation Type dropdown (e.g., "Peer Mentor" if you are the one scanning; select the student's role if you know it).
-4. Tap **Start Scanner** — your camera will open.
-5. Hold the camera over a student's QR code. The app will automatically detect and scan it.
-6. Check the status message:
-   - 🟢 **Green** = Check-in successful
-   - 🟡 **Yellow** = Student already checked in (duplicate)
-   - 🔴 **Red** = Error (unknown token or network issue)
-7. After each scan the camera pauses for 3 seconds, then resumes automatically.
-8. Tap **Stop Scanner** when you are done.
-
----
-
-## QR Code Format
-
-The scanner handles two formats:
-
-| Format | Example |
-|--------|---------|
-| Full URL | `https://cstep.york.cuny.edu/checkin?token=abc123` |
-| Token only | `abc123` |
-
-If a URL is scanned, the `token` query parameter is extracted automatically.
-
----
-
-## Webhook Payload
-
-Each successful scan sends a POST request with this JSON body:
+### Scan payload sent to `WEBHOOK_URL`
 
 ```json
 {
-  "qr_token": "abc123",
-  "event_uuid": "evt-uuid-002",
-  "event_name": "Workshop",
-  "participation_type": "attended",
-  "checkin_method": "qr_scan",
-  "checked_in_by": "scanner_page",
-  "timestamp": "2025-04-01T14:32:00.000Z"
+  "qr_token":     "abc123",
+  "event_id":     "1992055126508",
+  "event_name":   "STEP",
+  "event_date":   "2026-06-29",
+  "agenda_title": "Research Presentations"
+}
+```
+
+### Response expected from `WEBHOOK_URL`
+
+```json
+{
+  "status":       "success | duplicate | error",
+  "student_name": "Jane Doe",
+  "message":      "Checked in"
 }
 ```
 
 ---
 
-## Troubleshooting
+## Database Tables
 
-| Problem | Fix |
-|---------|-----|
-| Camera doesn't open | Make sure the page is loaded over HTTPS and camera permission is granted in the browser |
-| "Network error" message | Check that the webhook URL in `script.js` is correct and your n8n instance is running |
-| QR not detected | Ensure adequate lighting; hold the phone steady about 6–10 inches from the QR code |
-| Always shows error | Verify the student's QR token exists in your n8n/database workflow |
+### `activities`
+Populated by the fetch workflow when the page loads. One row per event + agenda session combination.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `event_id` | TEXT | Eventbrite event ID — part of primary key |
+| `activity_name` | TEXT | Agenda session title — part of primary key |
+| `activity_type` | TEXT | Service type from Eventbrite session description |
+| `activity_date` | DATE | Event date |
+| `activity_location` | TEXT | Venue address |
+
+### `activity_attendance`
+One row per student check-in.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `event_id` | TEXT | FK → activities |
+| `activity_name` | TEXT | FK → activities |
+| `student_id` | TEXT | Eventbrite attendee barcode |
 
 ---
 
+## Eventbrite Setup
+
+- **Activity type** is read from the Eventbrite agenda session's description field. Sessions without a description are excluded from the scanner dropdown.
+- Students must be checked into the main event in Eventbrite before the scanner will record their sub-event attendance this is insurance for checking them into main.
+
+---
 ## Files
 
 | File | Purpose |
 |------|---------|
-| `index.html` | Page structure and dropdowns |
-| `style.css` | Mobile-friendly styles |
-| `script.js` | Scanner logic, webhook call, response handling |
-| `README.md` | This file |
+| `index.html` | Scanner setup and page structure |
+| `style.css` | Mobile-first styles |
+| `script.js` | Event dropdown, QR scanner, and webhook logic |

@@ -1,1 +1,22 @@
+# Environment variables
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Images / test assets
 *.png
+*.jpg
+*.jpeg
+
+# Test data files
+*.test.json
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log

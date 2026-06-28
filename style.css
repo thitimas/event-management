@@ -96,8 +96,9 @@ main {
 
 .form-group select {
   width: 100%;
-  padding: 10px 12px;
-  font-size: 1rem;
+  min-height: 48px;
+  padding: 13px 14px;
+  font-size: 1.05rem;
   border: 1px solid #ced4da;
   border-radius: var(--radius);
   background-color: #fff;
@@ -108,6 +109,11 @@ main {
   background-position: right 12px center;
   cursor: pointer;
   transition: border-color 0.15s;
+}
+
+.form-group select:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
 }
 
 .form-group select:focus {
@@ -143,6 +149,13 @@ main {
   color: #fff;
 }
 
+/* The setup panel's Confirm button — large, full-width tap target. */
+#setupPanel > .btn {
+  width: 100%;
+  min-height: 54px;
+  font-size: 1.1rem;
+}
+
 .btn-primary:not(:disabled):hover {
   background-color: var(--color-primary-hover);
 }
@@ -154,6 +167,29 @@ main {
 
 .btn-secondary:not(:disabled):hover {
   background-color: var(--color-secondary-hover);
+}
+
+.btn-small {
+  flex: 0 0 auto;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius);
+  background-color: #fff;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, opacity 0.15s;
+}
+
+.btn-small:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-small:not(:disabled):active {
+  background-color: var(--color-primary);
+  color: #fff;
 }
 
 /* ---- Scanner area ---- */
@@ -235,38 +271,47 @@ main {
   color: #004085;
 }
 
+/* The scanner result is the most important thing on screen — make it big. */
+#statusArea .status-message {
+  padding: 20px 18px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+}
+
 /* ---- Last scan card ---- */
 .last-scan {
   background: #f8f9fa;
   border: 1px solid #e9ecef;
   border-radius: var(--radius);
-  padding: 14px 16px;
+  padding: 18px 20px;
 }
 
 .last-scan h3 {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-muted);
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 #lastScanDetails {
-  font-size: 0.9rem;
+  font-size: 1.2rem;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
 }
 
 #lastScanDetails .detail-row {
   display: flex;
-  gap: 6px;
+  gap: 10px;
 }
 
 #lastScanDetails .detail-label {
   font-weight: 600;
   color: var(--color-muted);
-  min-width: 130px;
+  min-width: 90px;
 }
 
 /* ---- Footer ---- */
@@ -287,6 +332,32 @@ footer {
   font-size: 0.9rem;
   color: var(--color-muted);
   margin-bottom: 4px;
+}
+
+.select-refresh-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.select-refresh-row select {
+  min-width: 0;
+}
+
+.form-help {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  line-height: 1.35;
+}
+
+.form-help.error {
+  color: var(--color-error);
+  font-weight: 600;
+}
+
+.form-help.success {
+  color: var(--color-success);
+  font-weight: 600;
 }
 
 .form-group input[type="text"] {
@@ -328,61 +399,20 @@ footer {
   min-width: 60px;
 }
 
-.btn-link {
-  background: none;
-  border: none;
+/* Full-width button to switch event/session — clearly visible, not a tiny link. */
+.btn-change {
+  width: 100%;
+  min-height: 48px;
+  background-color: #fff;
   color: var(--color-primary);
-  font-size: 0.8rem;
-  cursor: pointer;
-  padding: 4px 0 0;
-  text-align: left;
-  text-decoration: underline;
+  border: 1px solid var(--color-primary);
 }
 
-.btn-link:hover {
-  color: var(--color-primary-hover);
+.btn-change:not(:disabled):active {
+  background-color: var(--color-primary);
+  color: #fff;
 }
 
-/* ---- Test mode ---- */
-.test-mode-row {
-  background: #fff8e1;
-  border: 1px solid #ffe082;
-  border-radius: var(--radius);
-  padding: 10px 12px;
-}
-
-.toggle-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #5d4037;
-}
-
-.toggle-label input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  accent-color: var(--color-primary);
-}
-
-.toggle-hint {
-  font-weight: 400;
-  color: var(--color-muted);
-}
-
-.test-mode-indicator {
-  margin-top: 8px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #e65100;
-  background: #fff3e0;
-  border: 1px solid #ffcc80;
-  border-radius: 4px;
-  padding: 6px 10px;
-}
 
 /* ---- Cooldown overlay ---- */
 .cooldown-badge {

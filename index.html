@@ -3,51 +3,42 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CSTEP Attendance Scanner</title>
-  <link rel="stylesheet" href="style.css?v=3" />
+  <title>CSTEP / STEP Attendance Scanner</title>
+  <link rel="stylesheet" href="style.css?v=10" />
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>CSTEP Attendance Scanner</h1>
-      <p class="subtitle">Scan student QR codes to record attendance</p>
+      <h1>CSTEP / STEP Attendance Scanner</h1>
     </header>
 
     <main>
 
       <!-- ── SETUP PANEL (shown first) ── -->
       <div id="setupPanel">
-        <p class="setup-intro">Enter the event details once before scanning.</p>
+        <p class="setup-intro">Choose today's event and session to begin.</p>
 
-        <!-- Event Name -->
+        <!-- Eventbrite Event -->
         <div class="form-group">
-          <label for="eventNameInput">Event Name</label>
-          <input type="text" id="eventNameInput" placeholder="e.g. Research Presentation Day 2026" />
+          <label for="eventSelect">Event</label>
+          <div class="select-refresh-row">
+            <select id="eventSelect" disabled onchange="onEventChange()">
+              <option value="">Loading today's events...</option>
+            </select>
+            <button type="button" class="btn-small" onclick="loadEventsToday()">Refresh</button>
+          </div>
+          <p id="eventListStatus" class="form-help">Loading today's Eventbrite events...</p>
         </div>
 
-        <!-- Activity Type -->
+        <!-- Agenda Session -->
         <div class="form-group">
-          <label for="activitySelect">Activity / Service Type</label>
-          <select id="activitySelect">
-            <option value="">— Select activity type —</option>
-            <option value="supplemental_financial_assistance">Supplemental Financial Assistance (book award, conference travel, stipend, etc.)</option>
-            <option value="summer_program">Summer Program</option>
-            <option value="tutoring_supplemental_instruction">Tutoring / Supplemental Instruction</option>
-            <option value="supplemental_academic_advisement">Supplemental Academic Advisement</option>
-            <option value="academic_enrichment_workshop">Academic Enrichment / Workshop</option>
-            <option value="career_planning_workshop">Career Planning / Workshop</option>
-            <option value="graduate_admissions_license_exam_prep">Graduate Admissions / License Exam Prep</option>
+          <label for="sessionSelect">Session</label>
+          <select id="sessionSelect" disabled>
+            <option value="">— Select an event first —</option>
           </select>
+          <p id="sessionStatus" class="form-help"></p>
         </div>
 
-        <!-- Test Mode -->
-        <div class="form-group test-mode-row">
-          <label class="toggle-label">
-            <input type="checkbox" id="testModeToggle" onchange="onTestModeToggle()" />
-            <span class="toggle-text">Test mode <span class="toggle-hint">(scan real QR — no data sent to n8n)</span></span>
-          </label>
-          <div id="testModeIndicator" class="test-mode-indicator hidden">🧪 Test mode active — no real data is being sent</div>
-        </div>
 
         <div id="setupError" class="status-message error hidden"></div>
         <button class="btn btn-primary" onclick="confirmSetup()">Confirm &amp; Start Scanning</button>
@@ -63,11 +54,13 @@
             <span id="summaryEvent"></span>
           </div>
           <div class="session-row">
-            <span class="session-label">Activity:</span>
-            <span id="summaryActivity"></span>
+            <span class="session-label">Session:</span>
+            <span id="summarySession"></span>
           </div>
-          <button class="btn-link" onclick="resetSetup()">✏ Change</button>
         </div>
+
+        <!-- Switch to a different event / session -->
+        <button class="btn btn-change" onclick="resetSetup()">Change Event / Session</button>
 
         <!-- Scanner Controls -->
         <div class="scanner-controls">
@@ -103,6 +96,6 @@
 
   <!-- html5-qrcode library -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <script src="script.js?v=3"></script>
+  <script src="script.js?v=10"></script>
 </body>
 </html>
