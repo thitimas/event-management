@@ -511,8 +511,7 @@ function handleWebhookResponse(data, payload, timestamp) {
 
   if (data.status === "success") {
     showStatus(
-      `Checked in${studentName ? ": " + studentName : ""}` +
-      (data.message ? " — " + data.message : ""),
+      `Checked in${studentName ? ": " + studentName : ""}`,
       "success"
     );
     showLastScan({
@@ -522,8 +521,7 @@ function handleWebhookResponse(data, payload, timestamp) {
     });
   } else if (data.status === "duplicate") {
     showStatus(
-      `Already checked in${studentName ? ": " + studentName : ""}` +
-      (data.message ? " — " + data.message : ""),
+      `Already recorded${studentName ? ": " + studentName : ""}`,
       "warning"
     );
     showLastScan({
