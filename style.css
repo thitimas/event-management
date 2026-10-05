@@ -296,22 +296,121 @@ main {
   margin-bottom: 12px;
 }
 
-#lastScanDetails {
-  font-size: 1.2rem;
+.recent-scans {
+  list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
-#lastScanDetails .detail-row {
+.recent-scans li {
   display: flex;
+  align-items: center;
   gap: 10px;
+  font-size: 1.05rem;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
 }
 
-#lastScanDetails .detail-label {
+.recent-scans li.success {
+  background-color: var(--color-success-bg);
+  border-color: var(--color-success-border);
+  color: var(--color-success);
+}
+
+.recent-scans li.warning {
+  background-color: var(--color-warning-bg);
+  border-color: var(--color-warning-border);
+  color: var(--color-warning);
+}
+
+.recent-scans li.error {
+  background-color: var(--color-error-bg);
+  border-color: var(--color-error-border);
+  color: var(--color-error);
+}
+
+.recent-scans .recent-name {
+  flex: 1;
   font-weight: 600;
-  color: var(--color-muted);
-  min-width: 90px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.recent-scans .recent-status,
+.recent-scans .recent-time {
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* ---- Per-phone scan counter ---- */
+.scan-counter {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.scan-counter-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* ---- Full-screen result flash ----
+   Visual only: pointer-events none so it never blocks taps or the next scan. */
+.scan-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+  border: 14px solid transparent;
+  animation: scan-flash-fade 1.3s ease-out forwards;
+}
+
+.scan-flash.success {
+  background-color: var(--color-success-bg);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.scan-flash.warning {
+  background-color: var(--color-warning-bg);
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
+.scan-flash.error {
+  background-color: var(--color-error-bg);
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.scan-flash-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.scan-flash-text {
+  font-size: 2.4rem;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+@keyframes scan-flash-fade {
+  0%, 70% { opacity: 1; }
+  100%    { opacity: 0; }
 }
 
 /* ---- Footer ---- */
