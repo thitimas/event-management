@@ -18,9 +18,32 @@ The Eventbrite API token never touches the browser — it lives in n8n credentia
 
 ---
 
+## Security
+
+### Staff passcode
+
+1. The first time the page is opened on a device, staff enter the **staff passcode** and tap **Save**. It is stored in the browser's `localStorage` on that device.
+2. Every request to n8n (the events GET and each scan POST) sends the passcode in an `X-Scanner-Key` header. It is never put in a URL or logged to the console.
+3. n8n checks the header with a **Header Auth** credential. If n8n returns **401 or 403** (wrong or rotated passcode), the app clears the saved passcode, stops the scanner, and asks for the current passcode again.
+4. **Change passcode / log out** in the footer clears the saved passcode on that device.
+
+To rotate the passcode, edit the Header Auth credential in n8n and give staff the new value.
+
+The n8n side (Header Auth, CORS, rollout order, SQL parameters, PII) is covered in **[docs/n8n-security-checklist.md](docs/n8n-security-checklist.md)**. Deploy the app first, then turn on Header Auth in n8n.
+
+### Content-Security-Policy
+
+`index.html` sets a CSP via `<meta http-equiv>`: scripts only from this site, network requests only to `https://cstep-n8n.york.cuny.edu`. Inline scripts and inline event handlers (`onclick=` etc.) are blocked, so wire up new buttons with `addEventListener` in `script.js`. If the n8n domain changes, update `connect-src` in the CSP as well as the URLs in `script.js`.
+
+### Scanner library
+
+The QR library is self-hosted at `vendor/html5-qrcode.min.js` — **html5-qrcode 2.3.8**, downloaded from `https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js` (SHA-256 `660b12437b1d747e3e68b8be0685c08cb728140110ad213f167b14b66f8b1d8e`). To upgrade, download the new min build to the same path and bump the `?v=` cache-buster.
+
+---
+
 ## n8n Webhooks
 
-Update both URLs in `script.js` if the n8n instance or workflow IDs change:
+Both webhooks require the `X-Scanner-Key` header once Header Auth is enabled (see [Security](#security)). Update both URLs in `script.js` if the n8n instance or workflow IDs change:
 
 ```js
 // Receives each QR scan and records attendance
@@ -90,4 +113,6 @@ One row per student check-in.
 |------|---------|
 | `index.html` | Scanner setup and page structure |
 | `style.css` | Mobile-first styles |
-| `script.js` | Event dropdown, QR scanner, and webhook logic |
+| `script.js` | Passcode, event dropdown, QR scanner, and webhook logic |
+| `vendor/html5-qrcode.min.js` | Self-hosted html5-qrcode 2.3.8 |
+| `docs/n8n-security-checklist.md` | n8n-side security steps |

@@ -3,8 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Content-Security-Policy: scripts only from this site (no inline scripts or
+       inline event handlers), network calls only to the n8n server.
+       style-src allows 'unsafe-inline' because html5-qrcode injects inline styles. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; connect-src https://cstep-n8n.york.cuny.edu; object-src 'none'; base-uri 'none'; form-action 'none'" />
   <title>CSTEP / STEP Attendance Scanner</title>
-  <link rel="stylesheet" href="style.css?v=10" />
+  <link rel="stylesheet" href="style.css?v=11" />
 </head>
 <body>
   <div class="container">
@@ -14,18 +18,31 @@
 
     <main>
 
-      <!-- ── SETUP PANEL (shown first) ── -->
-      <div id="setupPanel">
+      <!-- ── PASSCODE PANEL (shown first if no passcode is saved) ── -->
+      <form id="passcodePanel" class="hidden" novalidate>
+        <p class="setup-intro">Enter the staff passcode to use the scanner.</p>
+
+        <div class="form-group">
+          <label for="passcodeInput">Staff passcode</label>
+          <input type="password" id="passcodeInput" autocomplete="current-password" />
+        </div>
+
+        <div id="passcodeError" class="status-message error hidden"></div>
+        <button type="submit" id="savePasscodeBtn" class="btn btn-primary">Save</button>
+      </form>
+
+      <!-- ── SETUP PANEL (shown once a passcode is saved) ── -->
+      <div id="setupPanel" class="hidden">
         <p class="setup-intro">Choose today's event and session to begin.</p>
 
         <!-- Eventbrite Event -->
         <div class="form-group">
           <label for="eventSelect">Event</label>
           <div class="select-refresh-row">
-            <select id="eventSelect" disabled onchange="onEventChange()">
+            <select id="eventSelect" disabled>
               <option value="">Loading today's events...</option>
             </select>
-            <button type="button" class="btn-small" onclick="loadEventsToday()">Refresh</button>
+            <button type="button" id="refreshEventsBtn" class="btn-small">Refresh</button>
           </div>
           <p id="eventListStatus" class="form-help">Loading today's Eventbrite events...</p>
         </div>
@@ -41,7 +58,7 @@
 
 
         <div id="setupError" class="status-message error hidden"></div>
-        <button class="btn btn-primary" onclick="confirmSetup()">Confirm &amp; Start Scanning</button>
+        <button id="confirmSetupBtn" class="btn btn-primary">Confirm &amp; Start Scanning</button>
       </div>
 
       <!-- ── SCANNER PANEL (shown after setup) ── -->
@@ -60,12 +77,12 @@
         </div>
 
         <!-- Switch to a different event / session -->
-        <button class="btn btn-change" onclick="resetSetup()">Change Event / Session</button>
+        <button id="changeSetupBtn" class="btn btn-change">Change Event / Session</button>
 
         <!-- Scanner Controls -->
         <div class="scanner-controls">
-          <button id="startBtn" class="btn btn-primary" onclick="startScanner()">Start Scanner</button>
-          <button id="stopBtn" class="btn btn-secondary" onclick="stopScanner()" disabled>Stop Scanner</button>
+          <button id="startBtn" class="btn btn-primary">Start Scanner</button>
+          <button id="stopBtn" class="btn btn-secondary" disabled>Stop Scanner</button>
         </div>
 
         <!-- Camera / QR Area -->
@@ -91,11 +108,12 @@
 
     <footer>
       <p>CSTEP / STEP Attendance System &mdash; Scanner Page</p>
+      <p><button type="button" id="changePasscodeBtn" class="link-button hidden">Change passcode / log out</button></p>
     </footer>
   </div>
 
-  <!-- html5-qrcode library -->
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <script src="script.js?v=10"></script>
+  <!-- html5-qrcode 2.3.8, self-hosted (source: https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js) -->
+  <script src="vendor/html5-qrcode.min.js"></script>
+  <script src="script.js?v=11"></script>
 </body>
 </html>

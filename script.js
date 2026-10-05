@@ -20,6 +20,11 @@ const LOCAL_TIME_ZONE = "America/New_York";
 // 3000 = 3 seconds. This prevents the same QR from being sent twice.
 const SCAN_COOLDOWN_MS = 3000;
 
+// localStorage key for the staff passcode. The passcode is sent to n8n in the
+// X-Scanner-Key header (n8n Header Auth). Never put it in a URL or console log.
+const PASSCODE_STORAGE_KEY = "scannerPasscode";
+const PASSCODE_HEADER      = "X-Scanner-Key";
+
 
 // ---------------------------------------------------------------------------
 // STATE — internal variables, do not edit
@@ -43,9 +48,29 @@ const $ = (id) => document.getElementById(id);
 
 
 // ---------------------------------------------------------------------------
-// STARTUP
+// BUTTONS & INPUTS
+// Wired up here instead of inline onclick/onchange attributes, because the
+// Content-Security-Policy in index.html blocks inline event handlers.
 // ---------------------------------------------------------------------------
-loadEventsToday();
+$("passcodePanel").addEventListener("submit", onPasscodeSubmit);
+$("changePasscodeBtn").addEventListener("click", logOut);
+$("eventSelect").addEventListener("change", onEventChange);
+$("refreshEventsBtn").addEventListener("click", loadEventsToday);
+$("confirmSetupBtn").addEventListener("click", confirmSetup);
+$("changeSetupBtn").addEventListener("click", resetSetup);
+$("startBtn").addEventListener("click", startScanner);
+$("stopBtn").addEventListener("click", stopScanner);
+
+
+// ---------------------------------------------------------------------------
+// STARTUP
+// Ask for the staff passcode first if none is saved on this device.
+// ---------------------------------------------------------------------------
+if (getPasscode()) {
+  showSetupPanel();
+} else {
+  showPasscodePanel("");
+}
 
 
 // ---------------------------------------------------------------------------
@@ -73,6 +98,117 @@ function showSetupError(message) {
 function hideSetupError() {
   $("setupError").classList.add("hidden");
   $("setupError").textContent = "";
+}
+
+
+// ---------------------------------------------------------------------------
+// STAFF PASSCODE
+// Saved in localStorage and sent as the X-Scanner-Key header on every request
+// to n8n. If n8n rejects it (401/403) it is cleared and staff are asked again.
+// ---------------------------------------------------------------------------
+function getPasscode() {
+  try {
+    return localStorage.getItem(PASSCODE_STORAGE_KEY) || "";
+  } catch (_) {
+    return "";
+  }
+}
+
+function savePasscode(passcode) {
+  try {
+    localStorage.setItem(PASSCODE_STORAGE_KEY, passcode);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function clearPasscode() {
+  try {
+    localStorage.removeItem(PASSCODE_STORAGE_KEY);
+  } catch (_) {
+    // Storage unavailable — nothing to clear
+  }
+}
+
+// Headers sent with every n8n request.
+function authHeaders(extra = {}) {
+  return { ...extra, [PASSCODE_HEADER]: getPasscode() };
+}
+
+function isAuthError(response) {
+  return response.status === 401 || response.status === 403;
+}
+
+// Shows the passcode form. errorMessage is optional.
+function showPasscodePanel(errorMessage) {
+  $("setupPanel").classList.add("hidden");
+  $("scannerPanel").classList.add("hidden");
+  $("changePasscodeBtn").classList.add("hidden");
+  $("passcodePanel").classList.remove("hidden");
+  $("passcodeInput").value = "";
+
+  if (errorMessage) {
+    showPasscodeError(errorMessage);
+  } else {
+    hidePasscodeError();
+  }
+}
+
+function showSetupPanel() {
+  $("passcodePanel").classList.add("hidden");
+  $("scannerPanel").classList.add("hidden");
+  $("setupPanel").classList.remove("hidden");
+  $("changePasscodeBtn").classList.remove("hidden");
+  loadEventsToday();
+}
+
+function showPasscodeError(message) {
+  $("passcodeError").textContent = message;
+  $("passcodeError").classList.remove("hidden");
+}
+
+function hidePasscodeError() {
+  $("passcodeError").classList.add("hidden");
+  $("passcodeError").textContent = "";
+}
+
+function onPasscodeSubmit(e) {
+  e.preventDefault();
+  const passcode = $("passcodeInput").value.trim();
+
+  if (!passcode) {
+    showPasscodeError("Please enter the staff passcode.");
+    $("passcodeInput").focus();
+    return;
+  }
+
+  if (!savePasscode(passcode)) {
+    showPasscodeError("Could not save the passcode on this device. Check that private browsing is off.");
+    return;
+  }
+
+  hidePasscodeError();
+  $("passcodeInput").value = "";
+  showSetupPanel();
+}
+
+// Called when n8n returns 401/403: the saved passcode is wrong or was rotated.
+function handleAuthFailure() {
+  clearPasscode();
+  stopScanner();
+  hideStatus();
+  $("lastScan").classList.add("hidden");
+  showPasscodePanel("Passcode not accepted — enter the current passcode.");
+}
+
+// "Change passcode / log out" link in the footer.
+function logOut() {
+  clearPasscode();
+  stopScanner();
+  hideStatus();
+  $("lastScan").classList.add("hidden");
+  showPasscodePanel("");
 }
 
 
@@ -194,7 +330,7 @@ function formatEventTime(isoString) {
 
 async function loadEventsToday() {
   const select = $("eventSelect");
-  const refreshButton = document.querySelector(".btn-small");
+  const refreshButton = $("refreshEventsBtn");
   const today = getLocalDateString();
 
   todayEvents = [];
@@ -212,7 +348,16 @@ async function loadEventsToday() {
   try {
     const response = await fetch(`${EVENTS_TODAY_URL}?v=${Date.now()}`, {
       cache: "no-store",
+      headers: authHeaders(),
     });
+
+    if (isAuthError(response)) {
+      todayEvents = [];
+      setEventSelectOptions([]);
+      setEventStatus("Passcode not accepted.", "error");
+      handleAuthFailure();
+      return;
+    }
 
     if (!response.ok) {
       throw new Error(`Could not load ${EVENTS_TODAY_URL}.`);
@@ -477,9 +622,15 @@ async function sendCheckin(payload, timestamp) {
 
     const response = await fetch(WEBHOOK_URL, {
       method:  "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders({ "Content-Type": "application/json" }),
       body:    JSON.stringify(payload),
     });
+
+    // Wrong or rotated passcode — stop scanning and ask for it again.
+    if (isAuthError(response)) {
+      handleAuthFailure();
+      return;
+    }
 
       // Try to parse the JSON response from n8n
       try {
