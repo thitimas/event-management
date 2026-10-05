@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CSTEP / STEP Attendance Scanner</title>
-  <link rel="stylesheet" href="style.css?v=10" />
+  <link rel="stylesheet" href="style.css?v=11" />
 </head>
 <body>
   <div class="container">
@@ -79,15 +79,27 @@
           <div id="statusMessage" class="status-message"></div>
         </div>
 
-        <!-- Last Scan Info -->
+        <!-- Per-phone counter (this device only — n8n does not return totals) -->
+        <div class="scan-counter">
+          <p id="scanCounter" class="scan-counter-value">0 scanned on this phone</p>
+          <p class="form-help">Successful check-ins for this event &amp; session from this phone only. Other phones are not included.</p>
+        </div>
+
+        <!-- Recent Scans (kept in memory only) -->
         <div id="lastScan" class="last-scan hidden">
-          <h3>Last Scan</h3>
-          <div id="lastScanDetails"></div>
+          <h3>Recent Scans</h3>
+          <ul id="recentScans" class="recent-scans"></ul>
         </div>
 
       </div>
 
     </main>
+
+    <!-- Full-screen result flash (purely visual, never blocks taps) -->
+    <div id="scanFlash" class="scan-flash hidden" aria-hidden="true">
+      <p id="scanFlashTitle" class="scan-flash-title"></p>
+      <p id="scanFlashText" class="scan-flash-text"></p>
+    </div>
 
     <footer>
       <p>CSTEP / STEP Attendance System &mdash; Scanner Page</p>
@@ -96,6 +108,6 @@
 
   <!-- html5-qrcode library -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <script src="script.js?v=10"></script>
+  <script src="script.js?v=11"></script>
 </body>
 </html>

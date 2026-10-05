@@ -8,11 +8,17 @@ A mobile-friendly QR scanner for recording student attendance at CSTEP/STEP sub-
 
 1. On page load the scanner calls an n8n GET webhook, which fetches today's Eventbrite events and their agenda sessions in real time.
 2. Only events with agenda sessions that have a service type set in their Eventbrite description are shown.
-3. A coordinator selects an event and session, then starts scanning student QR codes.
+3. A coordinator selects an event and session and taps **Confirm**. The camera starts right away.
 4. Each scan is sent to an n8n POST webhook which:
    - Looks up the student barcode in Eventbrite to verify they checked into the main event
    - Inserts an attendance record into the `activity_attendance` table
    - Returns the student's name to display on screen
+5. Each result triggers a short full-screen color flash (green = checked in, yellow = already recorded, red = error) and a vibration on phones that support it (not iOS). If the webhook doesn't answer within 10 seconds, the scanner shows "Request timed out — please scan again" and resumes.
+
+### On-device data
+
+- **"N scanned on this phone"** counts successful check-ins from that phone only, for the current date + event + session. The count is saved in `localStorage` (numbers only). n8n doesn't return totals, so other phones aren't included.
+- **Recent Scans** shows the last 5 results (name, status, time). It's kept in memory only and cleared when the event/session changes or the page reloads. Student names are never saved on the device.
 
 The Eventbrite API token never touches the browser — it lives in n8n credentials.
 
