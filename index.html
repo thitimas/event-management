@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CSTEP / STEP Attendance Scanner</title>
-  <link rel="stylesheet" href="style.css?v=10" />
+  <link rel="stylesheet" href="style.css?v=11" />
 </head>
 <body>
   <div class="container">
@@ -47,6 +47,18 @@
       <!-- ── SCANNER PANEL (shown after setup) ── -->
       <div id="scannerPanel" class="hidden">
 
+        <!-- Current activity — large so nobody scans into the wrong one -->
+        <div class="current-activity">
+          <span class="current-activity-label">Now scanning for</span>
+          <span id="currentActivity" class="current-activity-name"></span>
+        </div>
+
+        <!-- Switch activity without stopping the camera -->
+        <div class="form-group">
+          <label for="activitySelect">Switch activity</label>
+          <select id="activitySelect"></select>
+        </div>
+
         <!-- Active session summary -->
         <div class="session-summary">
           <div class="session-row">
@@ -61,6 +73,13 @@
 
         <!-- Switch to a different event / session -->
         <button class="btn btn-change" onclick="resetSetup()">Change Event / Session</button>
+
+        <!-- Shareable link that opens this phone straight to the current activity -->
+        <div class="activity-link">
+          <button type="button" id="copyLinkBtn" class="btn-copy-link">Copy link for this activity</button>
+          <p id="copyLinkStatus" class="form-help"></p>
+          <input type="text" id="activityLinkField" class="activity-link-field hidden" readonly aria-label="Activity link" />
+        </div>
 
         <!-- Scanner Controls -->
         <div class="scanner-controls">
@@ -96,6 +115,6 @@
 
   <!-- html5-qrcode library -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <script src="script.js?v=10"></script>
+  <script src="script.js?v=11"></script>
 </body>
 </html>

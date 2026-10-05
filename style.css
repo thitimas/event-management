@@ -413,6 +413,74 @@ footer {
   color: #fff;
 }
 
+/* ---- Scanner panel spacing ---- */
+#scannerPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ---- Current activity — the biggest thing on the scanner panel ---- */
+.current-activity {
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  text-align: center;
+}
+
+.current-activity-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.85;
+}
+
+.current-activity-name {
+  display: block;
+  margin-top: 4px;
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+/* ---- Activity link ---- */
+.activity-link {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.btn-copy-link {
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius);
+  background-color: #fff;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.btn-copy-link:active {
+  background-color: var(--color-primary);
+  color: #fff;
+}
+
+.activity-link-field {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  border: 1px solid #ced4da;
+  border-radius: var(--radius);
+  color: var(--color-text);
+}
+
 
 /* ---- Cooldown overlay ---- */
 .cooldown-badge {
