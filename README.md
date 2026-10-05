@@ -16,6 +16,13 @@ A mobile-friendly QR scanner for recording student attendance at CSTEP/STEP sub-
 
 The Eventbrite API token never touches the browser — it lives in n8n credentials.
 
+### Choosing and switching activities
+
+- **Auto-select:** when an event is chosen, the session that most recently started (by agenda `start_time`, New York time) is pre-selected. If none have started yet, the earliest session is picked. Staff can still change it.
+- **Switch on the scanner screen:** the "Switch activity" dropdown changes the activity for the next scan without stopping the camera. The current activity is shown in large text at the top.
+- **Activity links:** "Copy link for this activity" copies a URL like `?event=<eventId>&session=<session title>`. Opening it goes straight to the scanner screen for that activity (the camera is not started automatically). If the link doesn't match today's events, the setup screen shows a message instead. Links contain no secrets.
+- **Remember per phone:** the last event + activity is saved in the phone's browser (localStorage) and restored on reload the same day, if it still exists. Activity link parameters take precedence.
+
 ---
 
 ## n8n Webhooks

@@ -20,6 +20,9 @@ const LOCAL_TIME_ZONE = "America/New_York";
 // 3000 = 3 seconds. This prevents the same QR from being sent twice.
 const SCAN_COOLDOWN_MS = 3000;
 
+// localStorage key for remembering this phone's last event + activity.
+const LAST_CHOICE_KEY = "cstepScanner.lastChoice";
+
 
 // ---------------------------------------------------------------------------
 // STATE — internal variables, do not edit
@@ -44,8 +47,13 @@ const $ = (id) => document.getElementById(id);
 
 // ---------------------------------------------------------------------------
 // STARTUP
+// After events load, open an activity link (?event=&session=) or restore
+// this phone's last choice for today.
 // ---------------------------------------------------------------------------
-loadEventsToday();
+$("activitySelect").addEventListener("change", onActivitySwitch);
+$("copyLinkBtn").addEventListener("click", copyActivityLink);
+
+loadEventsToday().then(restoreInitialChoice);
 
 
 // ---------------------------------------------------------------------------
@@ -141,12 +149,15 @@ function setSessionOptions(agenda) {
 
   select.appendChild(makeOption("", "— Select a session —"));
   agenda.forEach((session) => {
-    const label = session.start_time
-      ? `${formatAgendaTime(session.start_time)} — ${session.title}`
-      : session.title;
-    select.appendChild(makeOption(session.title, label));
+    select.appendChild(makeOption(session.title, sessionLabel(session)));
   });
   select.disabled = false;
+}
+
+function sessionLabel(session) {
+  return session.start_time
+    ? `${formatAgendaTime(session.start_time)} — ${session.title}`
+    : session.title;
 }
 
 function makeOption(value, text) {
@@ -161,6 +172,47 @@ function onEventChange() {
   hideSetupError();
   const event = todayEvents.find((item) => item.id === $("eventSelect").value);
   setSessionOptions(event ? event.agenda : null);
+  if (event) $("sessionSelect").value = pickCurrentSession(event.agenda);
+}
+
+// "HH:MM" -> minutes since midnight, or null if the time is missing/invalid.
+function parseAgendaMinutes(hhmm) {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(hhmm || "");
+  if (!match) return null;
+  return parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+}
+
+// Minutes since midnight right now, in LOCAL_TIME_ZONE.
+function getLocalMinutesNow(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: LOCAL_TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return (parseInt(values.hour, 10) % 24) * 60 + parseInt(values.minute, 10);
+}
+
+// Pick the session that most recently started; if none have started yet,
+// the earliest one. Returns "" when no session has a usable start time.
+function pickCurrentSession(agenda) {
+  const now = getLocalMinutesNow();
+  let latestStarted = null;
+  let earliest = null;
+
+  agenda.forEach((session) => {
+    const minutes = parseAgendaMinutes(session.start_time);
+    if (minutes === null) return;
+    if (!earliest || minutes < earliest.minutes) earliest = { session, minutes };
+    if (minutes <= now && (!latestStarted || minutes >= latestStarted.minutes)) {
+      latestStarted = { session, minutes };
+    }
+  });
+
+  const pick = latestStarted || earliest;
+  return pick ? pick.session.title : "";
 }
 
 // Agenda times come from Eventbrite as a 24-hour "HH:MM" clock string.
@@ -336,18 +388,174 @@ function confirmSetup() {
     return;
   }
 
+  activateSession(selectedEvent, session);
+}
+
+// Store the chosen event + activity, update the scanner panel, and show it.
+// Used by the setup form, activity links, and the remembered last choice.
+function activateSession(event, session) {
   // Store for use in every scan
-  sessionEventId     = selectedEvent.id;
-  sessionEventName   = selectedEvent.name;
+  sessionEventId     = event.id;
+  sessionEventName   = event.name;
   sessionAgendaTitle = session.title;
 
-  // Update session summary display
-  $("summaryEvent").textContent   = selectedEvent.name;
-  $("summarySession").textContent = session.title;
+  // Keep the setup form in sync so "Change Event / Session" starts from here
+  $("eventSelect").value = event.id;
+  setSessionOptions(event.agenda);
+
+  // Fill the on-scanner activity switcher from this event's agenda
+  const activitySelect = $("activitySelect");
+  activitySelect.textContent = "";
+  event.agenda.forEach((item) => {
+    activitySelect.appendChild(makeOption(item.title, sessionLabel(item)));
+  });
+
+  $("summaryEvent").textContent = event.name;
+  updateActivityDisplay();
 
   // Switch panels
   $("setupPanel").classList.add("hidden");
   $("scannerPanel").classList.remove("hidden");
+}
+
+// Refresh everything that shows the current activity, and remember it.
+function updateActivityDisplay() {
+  $("currentActivity").textContent = sessionAgendaTitle;
+  $("summarySession").textContent  = sessionAgendaTitle;
+  $("activitySelect").value        = sessionAgendaTitle;
+  $("sessionSelect").value         = sessionAgendaTitle;
+
+  // Any previously shown link was for the old activity
+  $("copyLinkStatus").textContent = "";
+  $("activityLinkField").classList.add("hidden");
+
+  // Keep the address bar matching the current activity, so a reload
+  // reopens this activity instead of an older link's activity
+  try {
+    history.replaceState(null, "", buildActivityLink());
+  } catch (_) {}
+
+  saveLastChoice();
+}
+
+
+// ---------------------------------------------------------------------------
+// ACTIVITY SWITCH — change activity from the scanner panel
+// The camera keeps running; the next scan uses the new activity.
+// ---------------------------------------------------------------------------
+function onActivitySwitch() {
+  const event   = todayEvents.find((item) => item.id === sessionEventId);
+  const session = event && event.agenda.find((item) => item.title === $("activitySelect").value);
+
+  if (!session) {
+    $("activitySelect").value = sessionAgendaTitle;
+    return;
+  }
+
+  sessionAgendaTitle = session.title;
+  updateActivityDisplay();
+
+  // The last scan belonged to the previous activity — hide it to avoid confusion
+  $("lastScan").classList.add("hidden");
+}
+
+
+// ---------------------------------------------------------------------------
+// ACTIVITY LINKS + REMEMBERED CHOICE
+// Links look like ?event=<eventId>&session=<session title>. Nothing secret
+// goes in the URL. URL params take precedence over the remembered choice.
+// ---------------------------------------------------------------------------
+function buildActivityLink() {
+  const url = new URL(window.location.href);
+  url.search = "";
+  url.hash   = "";
+  url.searchParams.set("event", sessionEventId);
+  url.searchParams.set("session", sessionAgendaTitle);
+  return url.toString();
+}
+
+function findEventSession(eventId, sessionTitle) {
+  const event   = todayEvents.find((item) => item.id === eventId);
+  const session = event && event.agenda.find((item) => item.title === sessionTitle);
+  return { event, session };
+}
+
+function saveLastChoice() {
+  try {
+    localStorage.setItem(LAST_CHOICE_KEY, JSON.stringify({
+      date:         getLocalDateString(),
+      eventId:      sessionEventId,
+      sessionTitle: sessionAgendaTitle,
+    }));
+  } catch (_) {
+    // Storage unavailable (e.g. private mode) — remembering is optional
+  }
+}
+
+function loadLastChoice() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(LAST_CHOICE_KEY) || "null");
+    return saved && typeof saved === "object" ? saved : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+// Runs once, after the first events load.
+function restoreInitialChoice() {
+  const params      = new URLSearchParams(window.location.search);
+  const linkEventId = params.get("event");
+  const linkSession = params.get("session");
+
+  if (linkEventId || linkSession) {
+    const { event, session } = findEventSession(linkEventId, linkSession);
+    if (event && session) {
+      activateSession(event, session);
+      return;
+    }
+
+    if (todayEvents.length === 0) {
+      showSetupError("Could not open the activity link because today's events did not load. Tap Refresh, then choose the event and session below.");
+    } else if (event) {
+      $("eventSelect").value = event.id;
+      onEventChange();
+      showSetupError(`The activity link's session "${linkSession || ""}" was not found for this event. Please choose a session below.`);
+    } else {
+      showSetupError("The activity link does not match any of today's events. Please choose the event and session below.");
+    }
+    return;
+  }
+
+  const saved = loadLastChoice();
+  if (saved && saved.date === getLocalDateString()) {
+    const { event, session } = findEventSession(String(saved.eventId || ""), String(saved.sessionTitle || ""));
+    if (event && session) activateSession(event, session);
+  }
+}
+
+// Copy the activity link; if the clipboard is blocked, show the link in a
+// selectable field instead.
+async function copyActivityLink() {
+  const link   = buildActivityLink();
+  const status = $("copyLinkStatus");
+  const field  = $("activityLinkField");
+
+  try {
+    if (!navigator.clipboard || !navigator.clipboard.writeText) {
+      throw new Error("Clipboard not available");
+    }
+    await navigator.clipboard.writeText(link);
+    field.classList.add("hidden");
+    status.textContent = "Link copied. Opening it goes straight to this activity.";
+    status.className   = "form-help success";
+  } catch (_) {
+    field.value = link;
+    field.classList.remove("hidden");
+    field.focus();
+    field.select();
+    status.textContent = "Could not copy automatically. Select and copy this link:";
+    status.className   = "form-help";
+  }
 }
 
 // Allow admin to go back and change details (stops scanner first)
